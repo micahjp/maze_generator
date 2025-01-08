@@ -11,6 +11,9 @@ class Window():
         self.__canvas.pack(pady=20)
         self.running = False
 
+    def draw_line(self, line, fill_color):
+        line.draw(self.__canvas, fill_color)
+
     def redraw(self):
         # this whole method is not needed if mainloop() is implimented
         self.__root.update()
