@@ -6,13 +6,15 @@ class Window():
         self.__root = Tk()
         self.__root.title("Maze_Solver")
         self.__root.geometry(f"{width}x{height}")
+        self.__root.update_idletasks()
+        print(self.__root.geometry())
         self.__root.protocol("WM_DELETE_WINDOW", self.close)
-        self.__canvas = Canvas()
-        self.__canvas.pack(pady=20)
+        self._canvas = Canvas(self.__root, width=width, height=height)
+        self._canvas.pack()
         self.running = False
 
     def draw_line(self, line, fill_color):
-        line.draw(self.__canvas, fill_color)
+        line.draw(self._canvas, fill_color)
 
     def redraw(self):
         # this whole method is not needed if mainloop() is implimented
