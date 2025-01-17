@@ -7,7 +7,8 @@ from point import Point
 class Maze():
     def __init__(
             self,
-            top_left_point,
+            top_left_x,
+            top_left_y,
             cell_size_x,
             cell_size_y,
             num_cols,
@@ -16,7 +17,7 @@ class Maze():
             seed=None
     ):
         self._cells = None
-        self.top_left_point = top_left_point
+        self.top_left_point = Point(top_left_x, top_left_y)
         self.cell_size_x = int(cell_size_x)
         self.cell_size_y = int(cell_size_y)
         self.num_cols = int(num_cols)
@@ -28,6 +29,7 @@ class Maze():
             random.seed(seed)
         self._break_walls_r(self._cells[0][0])
         self._reset_cells_visited()
+        self.solve()
 
     def _create_cells(self):
         self._cells = []
@@ -133,3 +135,42 @@ class Maze():
         for row in self._cells:
             for cell in row:
                 cell.visited = False
+
+    def solve(self):
+        return self._solve_r(self._cells[0][0], 0, 0)
+
+    def _get_directions(self, current_cell, x, y):
+        directions = []
+
+        if x != 0 and not current_cell.has_left_wall:
+            directions.append((x-1, y))
+        if x != self.num_cols - 1 and not current_cell.has_right_wall:
+            directions.append((x+1, y))
+        if y != 0 and not current_cell.has_top_wall:
+            directions.append((x, y-1))
+        if y != self.num_rows - 1 and not current_cell.has_bottom_wall:
+            directions.append((x, y+1))
+
+        return directions
+
+    def _solve_r(self, current_cell, x, y):
+        if current_cell == self._cells[self.num_rows-1][self.num_cols-1]:
+            return True
+        current_cell.visited = True
+        directions = self._get_directions(current_cell, x, y)
+
+        while True:
+            if not directions:
+                return False
+            target_x, target_y = directions.pop()
+            target_cell = self._cells[target_y][target_x]
+
+            if target_cell.visited:
+                continue
+
+            if self.window:
+                current_cell.draw_move(target_cell)
+            if self._solve_r(target_cell, target_x, target_y):
+                return True
+            if self.window:
+                current_cell.draw_move(target_cell, undo=True)

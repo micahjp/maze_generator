@@ -1,7 +1,6 @@
 from window import Window
-from line import Line
-from point import Point
-from cell import Cell
+from maze import Maze
 
-my_window = Window(800, 800)
+my_window = Window(940, 940)
+maze = Maze(30, 30, 30, 30, 30, 30, my_window)
 my_window.wait_for_close()
