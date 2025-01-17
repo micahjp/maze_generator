@@ -35,6 +35,7 @@ class Window():
             num_cols = input("enter num of cols: ")
             num_rows = input("enter num of rows: ")
             maze = Maze(point_one, cell_size_x, cell_size_y, num_cols, num_rows, self)
+            print(maze._cells)
             leave = input("again?(Y/n)")
             if leave == "n":
                 self.close()

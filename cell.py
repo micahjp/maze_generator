@@ -12,6 +12,10 @@ class Cell():
         self.has_bottom_wall = True
         self.has_left_wall = True
         self._window = window
+        self.visited = False
+
+    def __repr__(self):
+        return f"Cell({self.top_left_point.x}, {self.top_left_point.y})" if self.top_left_point else "Cell()"
 
     def draw(self, top_left_point, bottom_right_point):
         self.top_left_point = top_left_point
