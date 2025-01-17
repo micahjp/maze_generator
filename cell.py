@@ -5,24 +5,35 @@ from point import Point
 class Cell():
     def __init__(
             self,
-            window
+            window,
+            top_left_point,
+            bottom_right_point
             ):
         self.has_top_wall = True
         self.has_right_wall = True
         self.has_bottom_wall = True
         self.has_left_wall = True
+        self.top_left_point = top_left_point
+        self.bottom_right_point = bottom_right_point
         self._window = window
         self.visited = False
 
     def __repr__(self):
         return f"Cell({self.top_left_point.x}, {self.top_left_point.y})" if self.top_left_point else "Cell()"
 
-    def draw(self, top_left_point, bottom_right_point):
-        self.top_left_point = top_left_point
-        self.top_right_point = Point(bottom_right_point.x, top_left_point.y)
-        self.bottom_right_point = bottom_right_point
-        self.bottom_left_point = Point(top_left_point.x, bottom_right_point.y)
-        self.center_point = self.top_left_point + ((self.bottom_right_point - self.top_left_point) / 2)
+    def draw(self):
+        self.top_right_point = Point(
+            self.bottom_right_point.x,
+            self.top_left_point.y
+        )
+        self.bottom_left_point = Point(
+            self.top_left_point.x,
+            self.bottom_right_point.y
+        )
+        self.center_point = self.top_left_point + (
+            (self.bottom_right_point - self.top_left_point) / 2
+        )
+
         self.top_wall = Line(self.top_left_point, self.top_right_point)
         self.right_wall = Line(self.top_right_point, self.bottom_right_point)
         self.bottom_wall = Line(self.bottom_right_point, self.bottom_left_point)

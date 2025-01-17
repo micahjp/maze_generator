@@ -24,7 +24,7 @@ class Maze():
         self.window = window
         self._create_cells()
         self._break_entrance_and_exit()
-        if seed:
+        if seed is not None:
             random.seed(seed)
         self._break_walls_r(self._cells[0][0])
         self._reset_cells_visited()
@@ -34,21 +34,25 @@ class Maze():
         for row in range(self.num_rows):
             self._cells.append([])
             for column in range(self.num_cols):
-                self._cells[row].append(Cell(self.window))
-                if self.window:
-                    self._draw_cell(self._cells[row][column], row, column)
+                top_left_x = (column * self.cell_size_x) + \
+                    self.top_left_point.x
+                top_left_y = (row * self.cell_size_y) + self.top_left_point.y
 
-    def _draw_cell(self, cell, row, column):
-        cell_top_left = Point(column * self.cell_size_x,
-                              row * self.cell_size_y) + self.top_left_point
-        cell_bottom_right = Point(
-            cell_top_left.x + self.cell_size_x,
-            cell_top_left.y + self.cell_size_y
-        )
-        cell.draw(
-            cell_top_left,
-            cell_bottom_right
-        )
+                self._cells[row].append(
+                    Cell(
+                        self.window,
+                        Point(top_left_x, top_left_y),
+                        Point(
+                            top_left_x + self.cell_size_x,
+                            top_left_y + self.cell_size_y
+                        )
+                    )
+                )
+                if self.window:
+                    self._draw_cell(self._cells[row][column])
+
+    def _draw_cell(self, cell):
+        cell.draw()
         self._animate()
 
     def _animate(self):
@@ -60,12 +64,8 @@ class Maze():
         self._cells[self.num_rows - 1][self.num_cols -
                                        1].has_bottom_wall = False
         if self.window:
-            self._draw_cell(self._cells[0][0], 0, 0)
-            self._draw_cell(
-                self._cells[self.num_rows - 1][self.num_cols - 1],
-                self.num_rows - 1,
-                self.num_cols - 1
-            )
+            self._draw_cell(self._cells[0][0])
+            self._draw_cell(self._cells[self.num_rows - 1][self.num_cols - 1])
 
     def _break_walls_r(self, current_cell):
         current_cell.visited = True
@@ -95,17 +95,17 @@ class Maze():
                 target_cell.has_bottom_wall = False
 
             if self.window:
-                current_cell.draw(current_cell.top_left_point,
-                                  current_cell.bottom_right_point)
-                target_cell.draw(target_cell.top_left_point,
-                                 target_cell.bottom_right_point)
+                self._draw_cell(current_cell)
+                self._draw_cell(target_cell)
             self._break_walls_r(target_cell)
 
     def _get_cell_neighbors(self, cell):
         x_index = int(
-            (cell.top_left_point.x - self.top_left_point.x) / self.cell_size_x)
+            (cell.top_left_point.x - self.top_left_point.x) / self.cell_size_x
+        )
         y_index = int(
-            (cell.top_left_point.y - self.top_left_point.y) / self.cell_size_y)
+            (cell.top_left_point.y - self.top_left_point.y) / self.cell_size_y
+        )
         neighbors = []
         if y_index != 0:
             if y_index != self.num_rows - 1:
@@ -114,7 +114,8 @@ class Maze():
             else:
                 neighbors.append(self._cells[y_index-1][x_index])
         else:
-            neighbors.append(self._cells[y_index+1][x_index])
+            if len(self._cells) > 1:
+                neighbors.append(self._cells[y_index+1][x_index])
 
         if x_index != 0:
             if x_index != self.num_cols - 1:
@@ -123,7 +124,8 @@ class Maze():
             else:
                 neighbors.append(self._cells[y_index][x_index-1])
         else:
-            neighbors.append(self._cells[y_index][x_index+1])
+            if len(self._cells[0]) > 1:
+                neighbors.append(self._cells[y_index][x_index+1])
 
         return neighbors
 
