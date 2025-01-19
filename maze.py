@@ -145,6 +145,7 @@ class Maze():
     def _player_move(self, event, move):
         if self._current_cell == self._cells[self.num_rows-1][self.num_cols-1]:
             self.complete()
+            self.window.close(game_complete=True)
         self._current_cell.visited = True
         move = tuple(a+b for a, b in zip(move, self._current_cell_index))
         valid_directions = self._get_directions(
@@ -208,6 +209,7 @@ class Maze():
                 self.solve
                 )
         self.window._canvas.focus_set()
+        return
 
     def solve(self, event=None):
         return self._solve_r(self._current_cell_index[0], self._current_cell_index[1])
@@ -215,6 +217,7 @@ class Maze():
     def _solve_r(self, x, y):
         if self._current_cell == self._cells[self.num_rows-1][self.num_cols-1]:
             self.complete()
+            self.window.close(game_complete=True)
             return True
         self._current_cell.visited = True
         directions = self._get_directions(x, y, validate=True)

@@ -1,4 +1,5 @@
-from tkinter import Tk, BOTH, Canvas
+from tkinter import Tk, Canvas
+from time import sleep
 
 
 class Window():
@@ -29,6 +30,9 @@ class Window():
         while self.running:
             self.redraw()
 
-    def close(self):
+    def close(self, game_complete=False):
+        if game_complete:
+            self.redraw()
+            sleep(5)
         self.running = False
         self.__root.destroy()
