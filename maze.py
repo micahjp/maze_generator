@@ -24,12 +24,15 @@ class Maze():
         self.num_rows = int(num_rows)
         self.window = window
         self._create_cells()
+        self._current_cell = self._cells[0][0]
         self._break_entrance_and_exit()
         if seed is not None:
             random.seed(seed)
-        self._break_walls_r(self._cells[0][0])
+        self._break_walls_r(0, 0)
         self._reset_cells_visited()
-        self.solve()
+        self._current_cell = self._cells[0][0]
+        self._current_cell_index = (0, 0)
+        self.play_game(0, 0)
 
     def _create_cells(self):
         self._cells = []
@@ -59,7 +62,7 @@ class Maze():
 
     def _animate(self):
         self.window.redraw()
-        sleep(0.01)
+        sleep(0.001)
 
     def _break_entrance_and_exit(self):
         self._cells[0][0].has_top_wall = False
@@ -69,108 +72,185 @@ class Maze():
             self._draw_cell(self._cells[0][0])
             self._draw_cell(self._cells[self.num_rows - 1][self.num_cols - 1])
 
-    def _break_walls_r(self, current_cell):
-        current_cell.visited = True
+    def _break_walls_r(self, x, y):
+        self._current_cell.visited = True
+        directions = self._get_directions(x, y)
+
         while True:
-            neighbors = []
-            for neighbor in self._get_cell_neighbors(current_cell):
-                if not neighbor.visited:
-                    neighbors.append(neighbor)
-                else:
-                    continue
-
-            if not neighbors:
+            self._current_cell = self._cells[y][x]
+            unvisited_neighbors = []
+            for cell_x, cell_y in directions:
+                if not self._cells[cell_y][cell_x].visited:
+                    unvisited_neighbors.append((cell_x, cell_y))
+            if not unvisited_neighbors:
                 return
-            target_cell = neighbors[int(random.randrange(0, len(neighbors)))]
 
-            if target_cell.top_left_point.x > current_cell.top_left_point.x:
-                target_cell.has_left_wall = False
-                current_cell.has_right_wall = False
-            elif target_cell.top_left_point.x < current_cell.top_left_point.x:
+            target_cell_x, target_cell_y = unvisited_neighbors.pop(
+                random.randrange(
+                    0,
+                    len(unvisited_neighbors)
+                )
+            )
+
+            target_cell = self._cells[target_cell_y][target_cell_x]
+
+            if target_cell_x < x:
                 target_cell.has_right_wall = False
-                current_cell.has_left_wall = False
-            elif target_cell.top_left_point.y > current_cell.top_left_point.y:
-                target_cell.has_top_wall = False
-                current_cell.has_bottom_wall = False
-            else:
-                current_cell.has_top_wall = False
+                self._current_cell.has_left_wall = False
+            elif target_cell_x > x:
+                target_cell.has_left_wall = False
+                self._current_cell.has_right_wall = False
+            elif target_cell_y < y:
                 target_cell.has_bottom_wall = False
+                self._current_cell.has_top_wall = False
+            elif target_cell_y > y:
+                target_cell.has_top_wall = False
+                self._current_cell.has_bottom_wall = False
 
             if self.window:
-                self._draw_cell(current_cell)
+                self._draw_cell(self._current_cell)
                 self._draw_cell(target_cell)
-            self._break_walls_r(target_cell)
+            self._current_cell = target_cell
+            self._break_walls_r(target_cell_x, target_cell_y)
 
-    def _get_cell_neighbors(self, cell):
-        x_index = int(
-            (cell.top_left_point.x - self.top_left_point.x) / self.cell_size_x
-        )
-        y_index = int(
-            (cell.top_left_point.y - self.top_left_point.y) / self.cell_size_y
-        )
-        neighbors = []
-        if y_index != 0:
-            if y_index != self.num_rows - 1:
-                neighbors.append(self._cells[y_index-1][x_index])
-                neighbors.append(self._cells[y_index+1][x_index])
-            else:
-                neighbors.append(self._cells[y_index-1][x_index])
+    def _get_directions(self, x, y, validate=False):
+        directions = []
+
+        if validate:
+            if x != 0 and not self._current_cell.has_left_wall:
+                directions.append((x-1, y))
+            if x != self.num_cols - 1 and not self._current_cell.has_right_wall:
+                directions.append((x+1, y))
+            if y != 0 and not self._current_cell.has_top_wall:
+                directions.append((x, y-1))
+            if y != self.num_rows - 1 and not self._current_cell.has_bottom_wall:
+                directions.append((x, y+1))
         else:
-            if len(self._cells) > 1:
-                neighbors.append(self._cells[y_index+1][x_index])
+            if x != 0:
+                directions.append((x-1, y))
+            if x != self.num_cols - 1:
+                directions.append((x+1, y))
+            if y != 0:
+                directions.append((x, y-1))
+            if y != self.num_rows - 1:
+                directions.append((x, y+1))
 
-        if x_index != 0:
-            if x_index != self.num_cols - 1:
-                neighbors.append(self._cells[y_index][x_index-1])
-                neighbors.append(self._cells[y_index][x_index+1])
-            else:
-                neighbors.append(self._cells[y_index][x_index-1])
-        else:
-            if len(self._cells[0]) > 1:
-                neighbors.append(self._cells[y_index][x_index+1])
-
-        return neighbors
+        return directions
 
     def _reset_cells_visited(self):
         for row in self._cells:
             for cell in row:
                 cell.visited = False
 
-    def solve(self):
-        return self._solve_r(self._cells[0][0], 0, 0)
+    def _player_move(self, event, move):
+        if self._current_cell == self._cells[self.num_rows-1][self.num_cols-1]:
+            self.complete()
+        self._current_cell.visited = True
+        move = tuple(a+b for a, b in zip(move, self._current_cell_index))
+        valid_directions = self._get_directions(
+            self._current_cell_index[0],
+            self._current_cell_index[1],
+            True
+        )
+        if move not in valid_directions:
+            return
+        previous_cell = self._current_cell
+        self._current_cell = self._cells[move[1]][move[0]]
+        self._current_cell_index = move
 
-    def _get_directions(self, current_cell, x, y):
-        directions = []
+        if self.window and self._current_cell.visited:
+            self._current_cell.draw_move(previous_cell, undo=True)
+            previous_cell.visited = False
+        else:
+            self._current_cell.draw_move(previous_cell)
+        return
 
-        if x != 0 and not current_cell.has_left_wall:
-            directions.append((x-1, y))
-        if x != self.num_cols - 1 and not current_cell.has_right_wall:
-            directions.append((x+1, y))
-        if y != 0 and not current_cell.has_top_wall:
-            directions.append((x, y-1))
-        if y != self.num_rows - 1 and not current_cell.has_bottom_wall:
-            directions.append((x, y+1))
+    def play_game(self, x, y):
+        # FIXME: need to write a function to listen for user keypresses and
+        # if the keypress wants to move in a valid direction cool,
+        # otherwise don't do it. Also we need to be able to exit at any
+        # point and solve the maze from the current cell.
 
-        return directions
+        self.window._canvas.bind(
+                "<Left>",
+                lambda event: self._player_move(event, (-1, 0))
+            )
+        self.window._canvas.bind(
+                "<Down>",
+                lambda event: self._player_move(event, (0, 1))
+                )
+        self.window._canvas.bind(
+                "<Up>",
+                lambda event: self._player_move(event, (0, -1))
+            )
+        self.window._canvas.bind(
+                "<Right>",
+                lambda event: self._player_move(event, (1, 0))
+                )
+        self.window._canvas.bind(
+                "<KeyPress-h>",
+                lambda event: self._player_move(event, (-1, 0))
+            )
+        self.window._canvas.bind(
+                "<KeyPress-j>",
+                lambda event: self._player_move(event, (0, 1))
+                )
+        self.window._canvas.bind(
+                "<KeyPress-k>",
+                lambda event: self._player_move(event, (0, -1))
+            )
+        self.window._canvas.bind(
+                "<KeyPress-l>",
+                lambda event: self._player_move(event, (1, 0))
+                )
+        self.window._canvas.bind(
+                "<KeyPress-s>",
+                self.solve
+                )
+        self.window._canvas.focus_set()
 
-    def _solve_r(self, current_cell, x, y):
-        if current_cell == self._cells[self.num_rows-1][self.num_cols-1]:
+    def solve(self, event=None):
+        return self._solve_r(self._current_cell_index[0], self._current_cell_index[1])
+
+    def _solve_r(self, x, y):
+        if self._current_cell == self._cells[self.num_rows-1][self.num_cols-1]:
+            self.complete()
             return True
-        current_cell.visited = True
-        directions = self._get_directions(current_cell, x, y)
+        self._current_cell.visited = True
+        directions = self._get_directions(x, y, validate=True)
 
         while True:
+            self._current_cell = self._cells[y][x]
             if not directions:
                 return False
             target_x, target_y = directions.pop()
-            target_cell = self._cells[target_y][target_x]
+            previous_cell = self._cells[y][x]
+            self._current_cell = self._cells[target_y][target_x]
 
-            if target_cell.visited:
+            if self._current_cell.visited:
                 continue
 
             if self.window:
-                current_cell.draw_move(target_cell)
-            if self._solve_r(target_cell, target_x, target_y):
+                self._current_cell.draw_move(previous_cell)
+            if self._solve_r(target_x, target_y):
                 return True
             if self.window:
-                current_cell.draw_move(target_cell, undo=True)
+                self._current_cell.draw_move(previous_cell, undo=True)
+
+    def complete(self):
+        message_id = self.window._canvas.create_text(
+            470,
+            470,
+            text="Maze Completed!",
+            font=("Ariel", 40),
+            fill="gold"
+        )
+        msg_loc = self.window._canvas.bbox(message_id)
+        rect_id = self.window._canvas.create_rectangle(
+            msg_loc[0],
+            msg_loc[1],
+            msg_loc[2],
+            msg_loc[3],
+            fill="white"
+        )
+        self.window._canvas.tag_lower(rect_id, message_id)
