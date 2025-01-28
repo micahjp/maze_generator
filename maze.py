@@ -240,8 +240,8 @@ class Maze():
 
     def complete(self):
         message_id = self.window._canvas.create_text(
-            470,
-            470,
+            self.window._canvas.winfo_width()//2,
+            self.window._canvas.winfo_height()//2,
             text="Maze Completed!",
             font=("Ariel", 40),
             fill="gold"
