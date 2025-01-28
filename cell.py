@@ -51,7 +51,18 @@ class Cell():
         fill_color = "black" if self.has_left_wall else "white"
         self._window.draw_line(self.left_wall, fill_color)
 
-    def draw_move(self, to_cell, undo=False):
+    def draw_move(self, to_cell, undo=False, solve=False):
         fill_color = "gray" if undo else "red"
+        if solve:
+            if undo:
+                fill_color = "white"
+            else:
+                fill_color = "blue"
+        else:
+            if undo:
+                fill_color = "gray"
+            else:
+                fill_color = "red"
+
         self.move = Line(self.center_point, to_cell.center_point)
         self._window.draw_line(self.move, fill_color)

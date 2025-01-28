@@ -167,11 +167,6 @@ class Maze():
         return
 
     def play_game(self, x, y):
-        # FIXME: need to write a function to listen for user keypresses and
-        # if the keypress wants to move in a valid direction cool,
-        # otherwise don't do it. Also we need to be able to exit at any
-        # point and solve the maze from the current cell.
-
         self.window._canvas.bind(
                 "<Left>",
                 lambda event: self._player_move(event, (-1, 0))
@@ -212,6 +207,9 @@ class Maze():
         return
 
     def solve(self, event=None):
+        self._current_cell = self._cells[0][0]
+        self._current_cell_index = (0, 0)
+        self._reset_cells_visited()
         return self._solve_r(self._current_cell_index[0], self._current_cell_index[1])
 
     def _solve_r(self, x, y):
@@ -234,11 +232,11 @@ class Maze():
                 continue
 
             if self.window:
-                self._current_cell.draw_move(previous_cell)
+                self._current_cell.draw_move(previous_cell, solve=True)
             if self._solve_r(target_x, target_y):
                 return True
             if self.window:
-                self._current_cell.draw_move(previous_cell, undo=True)
+                self._current_cell.draw_move(previous_cell, undo=True, solve=True)
 
     def complete(self):
         message_id = self.window._canvas.create_text(
